@@ -1,0 +1,46 @@
+{
+  "name": "pfp-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@aptos-labs/ts-sdk": "^5.2.1",
+    "@aptos-labs/wallet-adapter-react": "^8.3.3",
+    "@headlessui/react": "^2.2.9",
+    "@shelby-protocol/sdk": "^0.2.2",
+    "@tanstack/react-query": "^5.66.0",
+    "axios": "^1.7.9",
+    "axios-retry": "^4.5.0",
+    "clsx": "^2.1.1",
+    "file-saver": "^2.0.5",
+    "lucide-react": "^0.468.0",
+    "next": "14.2.35",
+    "react": "18.3.1",
+    "react-avatar-editor": "^13.0.0",
+    "react-dom": "18.3.1",
+    "react-draggable": "^4.4.6",
+    "react-hot-toast": "^2.5.2",
+    "react-resizable": "^3.0.5",
+    "socket.io-client": "^4.8.1",
+    "tailwind-merge": "^3.0.2"
+  },
+  "devDependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/node": "^20",
+    "@types/react": "^18.3.1",
+    "@types/react-avatar-editor": "^13.0.4",
+    "@types/react-dom": "^18.3.1",
+    "@types/react-resizable": "^3.0.8",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.35",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5"
+  }
+}

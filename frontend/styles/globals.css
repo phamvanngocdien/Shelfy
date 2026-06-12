@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'GT_Planar';
+  src: url('/fonts/GT-Planar-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'GT_Planar';
+  src: url('/fonts/GT-Planar-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'GT_Planar';
+  src: url('/fonts/GT-Planar-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ABCReproMono';
+  src: url('/fonts/ABCReproMono-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+body {
+  font-family: 'GT_Planar', sans-serif;
+  font-weight: 500;
+  @apply bg-gray-50 text-gray-900 dark:bg-[#0a0a14] dark:text-gray-100 transition-colors duration-300;
+}
+
+/* Monospace font for addresses */
+.font-mono {
+  font-family: 'ABCReproMono', monospace;
+}
+
+/* Smooth page transitions */
+main {
+  animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* PFP Gallery card hover */
+.pfp-card {
+  @apply transition-all duration-200;
+}
+.pfp-card:hover {
+  @apply shadow-lg shadow-pink-200/30 dark:shadow-pink-900/20 -translate-y-1;
+}
+
+/* Toast styles */
+.toastify {
+  padding: 10px 15px 10px 41px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-weight: 300;
+  font-size: 13px;
+  line-height: 1.4;
+  position: relative;
+  backdrop-filter: blur(12px);
+}
+.toastify::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  left: 15px;
+  top: 11px;
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.toast-success {
+  background: #21351a;
+  border-color: #9fe878;
+  color: #9fe878;
+}
+.toast-success::before {
+  background-image: url('/images/success-icon.svg');
+}
+.toast-error {
+  background: #680f0f;
+  border-color: #ffcaca;
+  color: #ffcaca;
+}
+.toast-error::before {
+  background-image: url('/images/error-icon.svg');
+}
+.toast-loading {
+  background: #454039;
+  border-color: #f7f1e9;
+  color: #f7f1e9;
+}
+.toast-loading::before {
+  background-image: url('/images/loading-icon.svg');
+}
+
+/* Skeleton animation */
+.skeleton {
+  @apply bg-gray-200 dark:bg-gray-700 animate-pulse rounded-xl;
+}
+
+/* Custom scrollbar hide for nav */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Focus styles */
+input:focus, select:focus, textarea:focus {
+  @apply ring-2 ring-pink-400 outline-none;
+}
+
+/* Button press effect */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Modal animations */
+.animate-fadeIn {
+  animation: modalFadeIn 0.2s ease-out;
+}
+.animate-scaleIn {
+  animation: modalScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modalScaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
