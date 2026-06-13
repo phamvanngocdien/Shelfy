@@ -4,7 +4,7 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/shelfy.ico" />
         <meta name="description" content="Create and share your own on-chain PFP on Aptos" />
         <script
           dangerouslySetInnerHTML={{
