@@ -48,7 +48,7 @@ export default function Layout({ children }: LayoutProps) {
           {/* Left: Logo + Nav */}
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-xs font-bold">S</div>
+              <img src="/images/shelfy-logo.png" alt="Shelfy" className="w-7 h-7 object-contain" />
               <span className="text-lg font-bold text-gray-900 dark:text-white">Shelfy Gallery</span>
             </Link>
             <nav className="hidden md:flex items-center gap-1">
