@@ -1,11 +1,11 @@
 import express from 'express';
-import { isAdmin } from '../../middleware/isAdmin.js';
+import { isAdminSimple } from '../../middleware/isAdminSimple.js';
 import { PFP } from '../../models/PFP.js';
 
 const router = express.Router();
 
 // GET /api/admin/pfp — list PFPs (filter: hidden/visible/all)
-router.get('/', isAdmin, async (req, res) => {
+router.get('/', isAdminSimple, async (req, res) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = Math.min(parseInt(req.query.limit as string) || 24, 100);
@@ -38,7 +38,7 @@ router.get('/', isAdmin, async (req, res) => {
 });
 
 // PATCH /api/admin/pfp/:id/hide — soft delete
-router.patch('/:id/hide', isAdmin, async (req, res) => {
+router.patch('/:id/hide', isAdminSimple, async (req, res) => {
   try {
     const { reason } = req.body;
     const adminAddress = req.headers['x-wallet-address'] as string;
@@ -60,7 +60,7 @@ router.patch('/:id/hide', isAdmin, async (req, res) => {
 });
 
 // PATCH /api/admin/pfp/:id/unhide — restore
-router.patch('/:id/unhide', isAdmin, async (req, res) => {
+router.patch('/:id/unhide', isAdminSimple, async (req, res) => {
   try {
     const pfp = await PFP.findByIdAndUpdate(
       req.params.id,
@@ -75,7 +75,7 @@ router.patch('/:id/unhide', isAdmin, async (req, res) => {
 });
 
 // Batch hide PFPs
-router.post('/batch-hide', isAdmin, async (req, res) => {
+router.post('/batch-hide', isAdminSimple, async (req, res) => {
   try {
     const { ids } = req.body;
     const adminAddress = req.headers['x-wallet-address'] as string;
@@ -88,7 +88,7 @@ router.post('/batch-hide', isAdmin, async (req, res) => {
 });
 
 // Batch delete PFPs permanently
-router.post('/batch-delete', isAdmin, async (req, res) => {
+router.post('/batch-delete', isAdminSimple, async (req, res) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'No IDs provided' });

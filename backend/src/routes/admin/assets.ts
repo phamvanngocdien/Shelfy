@@ -1,5 +1,5 @@
 import express from 'express';
-import { isAdmin } from '../../middleware/isAdmin.js';
+import { isAdminSimple } from '../../middleware/isAdminSimple.js';
 import { Asset } from '../../models/Asset.js';
 import { PFP } from '../../models/PFP.js';
 
@@ -8,7 +8,7 @@ const router = express.Router();
 // ========== ASSET MANAGEMENT ==========
 
 // Approve an asset
-router.patch('/:id/approve', isAdmin, async (req, res) => {
+router.patch('/:id/approve', isAdminSimple, async (req, res) => {
   try {
     const asset = await Asset.findByIdAndUpdate(
       req.params.id,
@@ -23,7 +23,7 @@ router.patch('/:id/approve', isAdmin, async (req, res) => {
 });
 
 // Soft-delete an asset (admin only)
-router.delete('/:id', isAdmin, async (req, res) => {
+router.delete('/:id', isAdminSimple, async (req, res) => {
   try {
     const asset = await Asset.findByIdAndUpdate(
       req.params.id,
@@ -38,7 +38,7 @@ router.delete('/:id', isAdmin, async (req, res) => {
 });
 
 // Restore a soft-deleted asset
-router.patch('/:id/restore', isAdmin, async (req, res) => {
+router.patch('/:id/restore', isAdminSimple, async (req, res) => {
   try {
     const asset = await Asset.findByIdAndUpdate(
       req.params.id,
@@ -53,7 +53,7 @@ router.patch('/:id/restore', isAdmin, async (req, res) => {
 });
 
 // Permanently delete an asset
-router.delete('/:id/permanent', isAdmin, async (req, res) => {
+router.delete('/:id/permanent', isAdminSimple, async (req, res) => {
   try {
     const asset = await Asset.findById(req.params.id);
     if (!asset) return res.status(404).json({ error: 'Asset not found' });
@@ -65,7 +65,7 @@ router.delete('/:id/permanent', isAdmin, async (req, res) => {
 });
 
 // Batch soft-delete assets
-router.post('/batch-delete', isAdmin, async (req, res) => {
+router.post('/batch-delete', isAdminSimple, async (req, res) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'No IDs provided' });
@@ -77,7 +77,7 @@ router.post('/batch-delete', isAdmin, async (req, res) => {
 });
 
 // Batch restore assets
-router.post('/batch-restore', isAdmin, async (req, res) => {
+router.post('/batch-restore', isAdminSimple, async (req, res) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'No IDs provided' });
@@ -89,7 +89,7 @@ router.post('/batch-restore', isAdmin, async (req, res) => {
 });
 
 // Stats
-router.get('/stats', isAdmin, async (req, res) => {
+router.get('/stats', isAdminSimple, async (req, res) => {
   try {
     const totalPFP = await PFP.countDocuments();
     const hiddenPFP = await PFP.countDocuments({ isHidden: true });

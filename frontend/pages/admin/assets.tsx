@@ -10,7 +10,6 @@ import { removeWhiteBackground } from '../../lib/removeWhiteBg';
 import { Network } from '@aptos-labs/ts-sdk';
 import { STORAGE_OPTIONS, DEFAULT_EXPIRATION_DAYS } from '../../lib/storageOptions';
 import { resolveNetwork, getShelbyExplorerUrl } from '../../lib/networkUtils';
-import { getAdminAuthHeaders } from '../../lib/adminAuth';
 
 interface Asset {
   _id: string; name: string; type: string; shelbyBlobName: string;
@@ -28,7 +27,7 @@ interface HiddenPFP {
 type ModalAction = { type: 'approve' | 'delete' | 'restore' | 'unhide' | 'batch-delete-assets' | 'batch-restore-assets' | 'batch-hide-pfps' | 'batch-delete-pfps'; id: string; name: string } | null;
 
 export default function AdminPage() {
-  const { account, connected, signAndSubmitTransaction, signMessage, network } = useAptosWallet();
+  const { account, connected, signAndSubmitTransaction, network } = useAptosWallet();
   const toast = useToast();
 
   const [activeTab, setActiveTab] = useState<'assets' | 'hidden'>('assets');
@@ -62,19 +61,12 @@ export default function AdminPage() {
   const isAdmin = connected && account?.address?.toString() === process.env.NEXT_PUBLIC_ADMIN_ADDRESS;
   const walletAddr = account?.address?.toString() || '';
 
-  const getAuthHeaders = async () => {
-    if (!account?.address || !account?.publicKey || !signMessage) {
+  /** Simple admin headers — only sends wallet address, no signature needed */
+  const getAdminHeaders = () => {
+    if (!account?.address) {
       throw new Error('Wallet not connected');
     }
-    // PublicKey may be a string or a PublicKey object with toString()
-    const pubKeyHex = typeof account.publicKey === 'string'
-      ? account.publicKey
-      : account.publicKey.toString();
-    return getAdminAuthHeaders({
-      address: account.address.toString(),
-      signMessage,
-      publicKey: pubKeyHex,
-    });
+    return { 'x-wallet-address': account.address.toString() };
   };
 
   const triggerRefetch = () => setRefetchKey(k => k + 1);
@@ -106,7 +98,7 @@ export default function AdminPage() {
       setHiddenLoading(true);
       (async () => {
         try {
-          const headers = await getAuthHeaders();
+          const headers = getAdminHeaders();
           const res = await api.get('/admin/pfp', {
             params: { filter: 'hidden', page: hiddenPage, limit: 12 },
             headers,
@@ -128,7 +120,7 @@ export default function AdminPage() {
     const { type, id } = modalAction;
     setModalAction(null);
     try {
-      const headers = await getAuthHeaders();
+      const headers = getAdminHeaders();
       if (type === 'approve') {
         await api.patch(`/admin/assets/${id}/approve`, {}, { headers });
         toast.success('Asset approved');
@@ -425,7 +417,7 @@ export default function AdminPage() {
                         // Use the _id from the create response directly — avoids race condition
                         const createdAsset = createRes.data;
                         if (createdAsset?._id && !createdAsset.isApproved) {
-                          const approveHeaders = await getAuthHeaders();
+                          const approveHeaders = getAdminHeaders();
                           await api.patch(`/admin/assets/${createdAsset._id}/approve`, {}, { headers: approveHeaders });
                         }
                       } catch { /* ignore backend errors */ }
