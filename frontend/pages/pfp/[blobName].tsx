@@ -7,7 +7,6 @@ import { EyeOff, Eye, Download, Share2 } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../../hooks/useToast';
 import { useAptosWallet } from '../../hooks/useAptosWallet';
-import { getAdminAuthHeaders } from '../../lib/adminAuth';
 import Skeleton from '../../components/Skeleton';
 
 interface PFPDetail {
@@ -32,25 +31,18 @@ export default function PFPDetailPage() {
   const { blobName } = router.query;
   const toast = useToast();
   const queryClient = useQueryClient();
-  const { account, signMessage } = useAptosWallet();
+  const { account } = useAptosWallet();
   const [hideReason, setHideReason] = useState('');
   const [showHideModal, setShowHideModal] = useState(false);
 
   const isAdmin = account?.address?.toString() === process.env.NEXT_PUBLIC_ADMIN_ADDRESS;
 
-  const getAuthHeaders = async () => {
-    if (!account?.address || !account?.publicKey || !signMessage) {
+  /** Simple admin headers — only sends wallet address, no signature needed */
+  const getAdminHeaders = () => {
+    if (!account?.address) {
       throw new Error('Wallet not connected');
     }
-    // PublicKey may be a string or a PublicKey object with toString()
-    const pubKeyHex = typeof account.publicKey === 'string'
-      ? account.publicKey
-      : account.publicKey.toString();
-    return getAdminAuthHeaders({
-      address: account.address.toString(),
-      signMessage,
-      publicKey: pubKeyHex,
-    });
+    return { 'x-wallet-address': account.address.toString() };
   };
 
   const { data: pfp, isPending: isPfpLoading, error } = useQuery({
@@ -62,7 +54,7 @@ export default function PFPDetailPage() {
   // Admin: hide PFP — no signature needed
   const hideMutation = useMutation({
     mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
-      const headers = await getAuthHeaders();
+      const headers = getAdminHeaders();
       await api.patch(`/admin/pfp/${id}/hide`, { reason }, { headers });
     },
     onSuccess: () => {
@@ -77,7 +69,7 @@ export default function PFPDetailPage() {
   // Admin: unhide PFP
   const unhideMutation = useMutation({
     mutationFn: async (id: string) => {
-      const headers = await getAuthHeaders();
+      const headers = getAdminHeaders();
       await api.patch(`/admin/pfp/${id}/unhide`, {}, { headers });
     },
     onSuccess: () => {
