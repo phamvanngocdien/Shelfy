@@ -10,9 +10,11 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { connectDB } from './config/db.js';
+import { startExpiredBlobCleanupJob } from './jobs/cleanup.js';
 
 dotenv.config();
 connectDB();
+startExpiredBlobCleanupJob();
 
 import assetsRouter from './routes/assets.js';
 import pfpRouter from './routes/pfp.js';
