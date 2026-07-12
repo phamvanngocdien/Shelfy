@@ -6,6 +6,7 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import api from '../lib/api';
 import Skeleton from '../components/Skeleton';
 import Pagination from '../components/Pagination';
+import { getShelbyBlobUrl } from '../lib/utils';
 import { Wallet, Grid3X3, List, Search } from 'lucide-react';
 
 interface PFP {
@@ -127,7 +128,7 @@ export default function MyPFPsPage() {
                     {viewMode === 'grid' ? (
                       <div className="group bg-white dark:bg-[#12121f] border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-pink-500/40 transition-all duration-200 hover:-translate-y-1">
                         <div className="relative aspect-square">
-                          <Image src={pfp.imageUrl} alt={pfp.username} fill sizes="16vw" className="object-cover" />
+                          <Image src={getShelbyBlobUrl(pfp.owner, pfp.blobName)} alt={pfp.username} fill sizes="16vw" className="object-cover" />
                         </div>
                         <div className="p-3">
                           <p className="font-semibold truncate text-sm text-gray-900 dark:text-white">{pfp.username}</p>
@@ -140,7 +141,7 @@ export default function MyPFPsPage() {
                     ) : (
                       <div className="flex items-center gap-4 bg-white dark:bg-[#12121f] border border-gray-200 dark:border-gray-800 rounded-xl p-3 hover:border-pink-500/40 transition-all">
                         <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
-                          <Image src={pfp.imageUrl} alt={pfp.username} fill className="object-cover" />
+                          <Image src={getShelbyBlobUrl(pfp.owner, pfp.blobName)} alt={pfp.username} fill className="object-cover" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">{pfp.username}</p>

@@ -7,6 +7,7 @@ import { EyeOff, Eye, Download, Share2 } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../../hooks/useToast';
 import { useAptosWallet } from '../../hooks/useAptosWallet';
+import { getShelbyBlobUrl } from '../../lib/utils';
 import Skeleton from '../../components/Skeleton';
 
 interface PFPDetail {
@@ -83,7 +84,7 @@ export default function PFPDetailPage() {
     if (!pfp) return;
     const toastId = toast.loading('Downloading...');
     try {
-      const response = await fetch(pfp.imageUrl);
+      const response = await fetch(getShelbyBlobUrl(pfp.owner, pfp.blobName));
       const blob = await response.blob();
       saveAs(blob, `${pfp.username}.png`);
       toast.update(toastId, 'Downloaded!', 'success');
@@ -139,7 +140,7 @@ export default function PFPDetailPage() {
         {/* Image */}
         <div className="relative aspect-square rounded-2xl overflow-hidden border-2 border-pink-200 dark:border-pink-800 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 shadow-lg">
           <Image
-            src={pfp.imageUrl}
+            src={getShelbyBlobUrl(pfp.owner, pfp.blobName)}
             alt={pfp.username}
             fill
             className="object-contain"

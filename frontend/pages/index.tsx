@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import api from '../lib/api';
 import { socket } from '../lib/socket';
+import { getShelbyBlobUrl } from '../lib/utils';
 import Skeleton from '../components/Skeleton';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
@@ -12,7 +13,7 @@ import { ArrowRight } from 'lucide-react';
 
 interface PFP {
   _id: string; username: string; discord: string;
-  blobName: string; imageUrl: string;
+  blobName: string; imageUrl: string; owner: string;
 }
 interface PFPResponse { pfps: PFP[]; totalPages: number; currentPage: number; }
 
@@ -93,7 +94,7 @@ export default function HomePage() {
               <div className="flex-shrink-0">
                 <div className="bg-white dark:bg-[#12121f] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 w-80 text-center">
                   <div className="relative w-64 h-64 mx-auto rounded-2xl overflow-hidden mb-4 border-2 border-gray-200 dark:border-gray-700">
-                    <Image src={recentPfps[0].imageUrl} alt={recentPfps[0].username} fill className="object-cover" sizes="160px" />
+                    <Image src={getShelbyBlobUrl(recentPfps[0].owner, recentPfps[0].blobName)} alt={recentPfps[0].username} fill className="object-cover" sizes="160px" />
                   </div>
                   <p className="text-gray-900 dark:text-white font-bold text-lg">{recentPfps[0].username}</p>
                   <p className="text-gray-500 text-sm">@{recentPfps[0].discord}</p>
@@ -115,7 +116,7 @@ export default function HomePage() {
               <Link href={`/pfp/${pfp.blobName}`} key={pfp._id} className="flex-shrink-0">
                 <div className="w-28 group">
                   <div className="relative w-28 h-28 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 group-hover:border-pink-500/50 transition-all">
-                    <Image src={pfp.imageUrl} alt={pfp.username} fill className="object-cover" sizes="112px" />
+                    <Image src={getShelbyBlobUrl(pfp.owner, pfp.blobName)} alt={pfp.username} fill className="object-cover" sizes="112px" />
                   </div>
                 </div>
               </Link>
@@ -139,7 +140,7 @@ export default function HomePage() {
               <Link href={`/pfp/${pfp.blobName}`} key={pfp._id}>
                 <div className="group bg-white dark:bg-[#12121f] border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-pink-500/40 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-500/5">
                   <div className="relative aspect-square">
-                    <Image src={pfp.imageUrl} alt={pfp.username} fill sizes="(max-width: 768px) 50vw, 16vw" className="object-cover" />
+                    <Image src={getShelbyBlobUrl(pfp.owner, pfp.blobName)} alt={pfp.username} fill sizes="(max-width: 768px) 50vw, 16vw" className="object-cover" />
                   </div>
                   <div className="p-3">
                     <p className="font-semibold truncate text-sm text-gray-900 dark:text-white">{pfp.username}</p>

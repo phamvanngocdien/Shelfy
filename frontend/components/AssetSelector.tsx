@@ -29,11 +29,12 @@ export interface PlacedAsset extends Asset {
 interface Props {
   onSelect: (assets: PlacedAsset[]) => void;
   croppedPreview?: string | null;
+  initialAssets?: PlacedAsset[];
 }
 
-export default function AssetSelector({ onSelect, croppedPreview }: Props) {
+export default function AssetSelector({ onSelect, croppedPreview, initialAssets }: Props) {
   const [assets, setAssets] = useState<Asset[]>([]);
-  const [placed, setPlaced] = useState<PlacedAsset[]>([]);
+  const [placed, setPlaced] = useState<PlacedAsset[]>(initialAssets || []);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);

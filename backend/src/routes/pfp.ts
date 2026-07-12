@@ -56,6 +56,7 @@ router.post(
         blobName,
         username: pfp.username,
         discord: pfp.discord,
+        owner: owner,
         imageUrl: `${process.env.SHELBY_GATEWAY}/${owner}/${blobName}`,
         assets: pfp.assets,
       });

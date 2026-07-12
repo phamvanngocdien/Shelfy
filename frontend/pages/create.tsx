@@ -177,7 +177,7 @@ export default function CreatePage() {
               Add frames and stickers to your PFP, or skip this step if you prefer it clean.
             </p>
           </div>
-          <AssetSelector onSelect={(assets: PlacedAsset[]) => setAssetsData(assets)} croppedPreview={croppedPreview} />
+          <AssetSelector onSelect={(assets: PlacedAsset[]) => setAssetsData(assets)} croppedPreview={croppedPreview} initialAssets={assetsData} />
           <div className="mt-6 flex justify-between">
             <button
               onClick={() => setStep(1)}
@@ -199,10 +199,24 @@ export default function CreatePage() {
       {step === 3 && (
         <div className="max-w-md mx-auto">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
-            {/* Show preview thumbnail */}
+            {/* Show preview thumbnail with decorations */}
             {croppedPreview && (
               <div className="flex justify-center mb-2">
-                <img src={croppedPreview} alt="Your PFP" className="w-24 h-24 rounded-lg object-cover border-2 border-pink-500" />
+                <div className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-pink-500">
+                  <img src={croppedPreview} alt="Your PFP" className="absolute inset-0 w-full h-full object-cover" />
+                  {assetsData.map((a) => (
+                    <img key={a.id} src={getShelbyBlobUrl(a.ownerAddress, a.shelbyBlobName)} alt={a.name}
+                      style={{
+                        position: 'absolute',
+                        left: `${(a.x / 400) * 100}%`,
+                        top: `${(a.y / 400) * 100}%`,
+                        width: `${(a.width / 400) * 100}%`,
+                        height: `${(a.height / 400) * 100}%`,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
             )}
             <div>
@@ -267,8 +281,22 @@ export default function CreatePage() {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
             <h2 className="text-xl font-bold">Confirm Upload</h2>
             {croppedPreview && (
-              <div className="flex justify-center">
-                <img src={croppedPreview} alt="Your PFP" className="w-32 h-32 rounded-lg object-cover border-2 border-pink-500" />
+              <div className="flex justify-center mb-2">
+                <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-pink-500">
+                  <img src={croppedPreview} alt="Your PFP" className="absolute inset-0 w-full h-full object-cover" />
+                  {assetsData.map((a) => (
+                    <img key={a.id} src={getShelbyBlobUrl(a.ownerAddress, a.shelbyBlobName)} alt={a.name}
+                      style={{
+                        position: 'absolute',
+                        left: `${(a.x / 400) * 100}%`,
+                        top: `${(a.y / 400) * 100}%`,
+                        width: `${(a.width / 400) * 100}%`,
+                        height: `${(a.height / 400) * 100}%`,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
             )}
             <div className="space-y-1 text-sm">
