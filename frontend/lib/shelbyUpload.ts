@@ -161,7 +161,7 @@ export async function batchUploadToShelby({
   onProgress?.('preparing', 0, total);
   type PreparedFile = {
     index: number; fileName: string; blobName: string;
-    fileData: Uint8Array; payload: any;
+    fileData: Uint8Array; commitments: any;
   };
   const prepared: PreparedFile[] = [];
 
@@ -171,14 +171,7 @@ export async function batchUploadToShelby({
       const fileData = new Uint8Array(arrayBuffer);
       const commitments = await generateCommitments(provider, fileData);
       const blobName = `${blobPrefix}_${Date.now()}_${i}.png`;
-      const expirationMicros = (Date.now() + expirationDays * 24 * 60 * 60 * 1000) * 1000;
-      const payload = ShelbyBlobClient.createRegisterBlobPayload({
-        account: ownerAddr, blobName,
-        blobMerkleRoot: commitments.blob_merkle_root,
-        numChunksets: expectedTotalChunksets(commitments.raw_data_size),
-        expirationMicros, blobSize: commitments.raw_data_size, encoding: 0,
-      });
-      return { index: i, fileName: item.fileName, blobName, fileData, payload } as PreparedFile;
+      return { index: i, fileName: item.fileName, blobName, fileData, commitments } as PreparedFile;
     } catch (err: any) {
       const result: BatchUploadResult = {
         fileName: item.fileName, blobName: '', txHash: '', success: false,
@@ -199,37 +192,49 @@ export async function batchUploadToShelby({
     return results;
   }
 
-  // ── Phase 2: Sign all transactions sequentially (fast, no waiting for confirm) ──
-  onProgress?.('signing', 0, prepared.length);
-  type SignedFile = PreparedFile & { txHash: string };
-  const signed: SignedFile[] = [];
+  // ── Phase 2: Sign a SINGLE batch transaction for all files ──
+  onProgress?.('signing', 0, 1, 'Approving batch transaction...');
+  let batchTxHash = '';
+  try {
+    const expirationMicros = (Date.now() + expirationDays * 24 * 60 * 60 * 1000) * 1000;
+    const blobsPayloadData = prepared.map(p => ({
+      blobName: p.blobName,
+      blobSize: p.commitments.raw_data_size,
+      blobMerkleRoot: p.commitments.blob_merkle_root,
+      numChunksets: expectedTotalChunksets(p.commitments.raw_data_size),
+    }));
 
-  for (let i = 0; i < prepared.length; i++) {
-    const p = prepared[i];
-    onProgress?.('signing', i, prepared.length, p.fileName);
-    try {
-      const pendingTxn = await signAndSubmitTransaction({ data: p.payload as any });
-      signed.push({ ...p, txHash: pendingTxn.hash });
-    } catch (err: any) {
-      const msg = err?.message || '';
-      const isCancel = msg.includes('rejected') || msg.includes('cancel') || msg.includes('denied');
+    const payload = ShelbyBlobClient.createBatchRegisterBlobsPayload({
+      account: ownerAddr,
+      expirationMicros,
+      blobs: blobsPayloadData,
+      encoding: 0,
+    });
+
+    const pendingTxn = await signAndSubmitTransaction({ data: payload as any });
+    batchTxHash = pendingTxn.hash;
+  } catch (err: any) {
+    const msg = err?.message || '';
+    const isCancel = msg.includes('rejected') || msg.includes('cancel') || msg.includes('denied');
+    const errStr = isCancel ? 'Transaction cancelled by user' : `Signing failed: ${msg}`;
+    for (const p of prepared) {
       const result: BatchUploadResult = {
         fileName: p.fileName, blobName: p.blobName, txHash: '', success: false,
-        error: isCancel ? 'Transaction cancelled by user' : `Signing failed: ${msg}`,
+        error: errStr,
       };
       results.push(result);
       onFileComplete?.(result);
-      // If user cancelled, stop signing remaining
-      if (isCancel) break;
     }
+    onProgress?.('done', total, total);
+    return results;
   }
-  onProgress?.('signing', prepared.length, prepared.length);
+  onProgress?.('signing', 1, 1);
 
-  // ── Phase 3: Confirm + Upload blob data (parallel, with retry) ──
-  onProgress?.('uploading', 0, signed.length);
+  // ── Phase 3: Confirm single transaction + Upload blob data ──
+  onProgress?.('uploading', 0, prepared.length);
   let uploadDone = 0;
 
-  const UPLOAD_TIMEOUT_MS = 30_000; // 30 seconds per attempt
+  const UPLOAD_TIMEOUT_MS = 30_000;
   const MAX_RETRIES = 3;
 
   async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -241,16 +246,32 @@ export async function batchUploadToShelby({
     ]);
   }
 
-  const uploadPromises = signed.map(async (s) => {
-    try {
-      // Wait for on-chain confirmation (with timeout)
-      await withTimeout(
-        aptos.waitForTransaction({ transactionHash: s.txHash }),
-        60_000, // 60s for chain confirmation
-        'Transaction confirmation'
-      );
+  try {
+    // Wait for on-chain confirmation (with timeout)
+    await withTimeout(
+      aptos.waitForTransaction({ transactionHash: batchTxHash }),
+      60_000,
+      'Transaction confirmation'
+    );
+  } catch (err: any) {
+    for (const p of prepared) {
+      const result: BatchUploadResult = {
+        fileName: p.fileName, blobName: p.blobName, txHash: batchTxHash, success: false,
+        error: `Confirmation failed: ${err?.message}`,
+      };
+      results.push(result);
+      onFileComplete?.(result);
+    }
+    onProgress?.('done', total, total);
+    return results;
+  }
 
-      // Upload blob with retry
+  // Use a concurrency limit to avoid overwhelming the gateway with 500s
+  const CONCURRENCY_LIMIT = 2;
+  const inProgress = new Set<Promise<void>>();
+
+  for (const s of prepared) {
+    const uploadTask = (async () => {
       let lastError: Error | null = null;
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
@@ -259,9 +280,8 @@ export async function batchUploadToShelby({
             UPLOAD_TIMEOUT_MS,
             `putBlob attempt ${attempt}`
           );
-          // Success
           const result: BatchUploadResult = {
-            fileName: s.fileName, blobName: s.blobName, txHash: s.txHash, success: true,
+            fileName: s.fileName, blobName: s.blobName, txHash: batchTxHash, success: true,
           };
           results.push(result);
           onFileComplete?.(result);
@@ -269,32 +289,31 @@ export async function batchUploadToShelby({
         } catch (err: any) {
           lastError = err;
           if (attempt < MAX_RETRIES) {
-            // Wait briefly before retry
             await new Promise(r => setTimeout(r, 1000 * attempt));
           }
         }
       }
-      // All retries failed
       const result: BatchUploadResult = {
-        fileName: s.fileName, blobName: s.blobName, txHash: s.txHash, success: false,
+        fileName: s.fileName, blobName: s.blobName, txHash: batchTxHash, success: false,
         error: `Upload failed after ${MAX_RETRIES} attempts: ${lastError?.message}`,
       };
       results.push(result);
       onFileComplete?.(result);
-    } catch (err: any) {
-      const result: BatchUploadResult = {
-        fileName: s.fileName, blobName: s.blobName, txHash: s.txHash, success: false,
-        error: `Failed: ${err?.message}`,
-      };
-      results.push(result);
-      onFileComplete?.(result);
-    } finally {
-      uploadDone++;
-      onProgress?.('uploading', uploadDone, signed.length);
-    }
-  });
+    })();
 
-  await Promise.all(uploadPromises);
+    uploadTask.finally(() => {
+      uploadDone++;
+      onProgress?.('uploading', uploadDone, prepared.length);
+      inProgress.delete(uploadTask);
+    });
+
+    inProgress.add(uploadTask);
+    if (inProgress.size >= CONCURRENCY_LIMIT) {
+      await Promise.race(inProgress);
+    }
+  }
+
+  await Promise.all(inProgress);
   onProgress?.('done', total, total);
   return results;
 }
